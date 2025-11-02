@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loader from "../components/Loader";
 import { useNavigate } from "react-router-dom";
+import ConfirmModal from "../components/ConfirmModal";
 import { humanFileSize } from "../utils/fileUtils";
 import {
   fetchDocumentsApi,
@@ -23,8 +24,15 @@ const Dashboard = () => {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [fileToDelete, setFileToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+
   const resumeInputRef = useRef();
   const jdInputRef = useRef();
+
+  const hasResume = documents.some((d) => d.type === "resume");
+  const hasJD = documents.some((d) => d.type === "jd");
 
   useEffect(() => {
     fetchDocuments();
@@ -86,17 +94,29 @@ const Dashboard = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this file?")) return;
+    setFileToDelete(id);
+    setIsModalOpen(true);
+  };
+  const confirmDelete = async () => {
     try {
-      await deleteDocumentApi(id);
+      setDeleting(true); 
+      await deleteDocumentApi(fileToDelete);
       toast.success("Deleted");
-      setDocuments((prev) => prev.filter((d) => d._id !== id));
+      setDocuments((prev) => prev.filter((d) => d._id !== fileToDelete));
     } catch (err) {
       console.error(err);
       toast.error(err?.response?.data?.message || "Delete failed");
+    } finally {
+      setDeleting(false); 
+      setIsModalOpen(false);
+      setFileToDelete(null);
     }
   };
 
+  const cancelDelete = () => {
+    setIsModalOpen(false);
+    setFileToDelete(null);
+  };
   const handleLogout = () => {
     dispatch(logout());
   };
@@ -308,6 +328,28 @@ const Dashboard = () => {
             </div>
           )}
         </section>
+        {/*  Start Chat Button  */}
+        <ConfirmModal
+          isOpen={isModalOpen}
+          title="Delete this file?"
+          message="This action cannot be undone. Do you want to permanently delete this document?"
+          onConfirm={confirmDelete}
+          onCancel={cancelDelete}
+          loading={deleting} 
+        />
+
+        {hasResume && hasJD && (
+          <div className="max-w-3xl mx-auto mt-10 text-center">
+            <button
+              onClick={() => navigate("/chat")}
+              className="relative inline-flex items-center justify-center px-8 py-3 overflow-hidden font-semibold rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-2xl group"
+            >
+              <span className="absolute inset-0 w-full h-full bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300"></span>
+
+              <span>Start Interview Chat</span>
+            </button>
+          </div>
+        )}
       </div>
     </main>
   );

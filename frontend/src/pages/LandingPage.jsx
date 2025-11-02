@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 
-export default function LandingPage() {
+const LandingPage = () => {
   return (
     <div className="min-h-screen flex flex-col justify-between bg-gradient-to-br from-indigo-50 to-blue-100">
       {/* Header */}
@@ -61,3 +61,5 @@ export default function LandingPage() {
     </div>
   );
 }
+export default LandingPage;
+
