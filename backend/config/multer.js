@@ -2,27 +2,35 @@ const multer = require('multer');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const cloudinary = require('./cloudinary');
 const MESSAGES = require('../constants/messages');
-
+const CONSTANTS = require('../constants/otherConstants');
 // Configure Cloudinary storage
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: 'interview-prep-docs',
-    allowed_formats: ['pdf'],
-    resource_type: 'raw',
+    folder: CONSTANTS.UPLOAD_CONSTANTS.FOLDER ,
+    allowed_formats: CONSTANTS.UPLOAD_CONSTANTS.ALLOWED_FORMATS,
+    resource_type: CONSTANTS.UPLOAD_CONSTANTS.RESOURCE_TYPE,
   },
 });
 
 // Multer configuration - resume and jd are accepted
 const upload = multer({
   storage: storage,
-  limits: { fileSize: 2 * 1024 * 1024 }, 
+  limits: { 
+    fileSize: CONSTANTS.UPLOAD_CONSTANTS.MAX_FILE_SIZE 
+  },
   fileFilter: (req, file, cb) => {
-    if (file.mimetype === 'application/pdf') {
-      cb(null, true);
-    } else {
-      cb(new Error(MESSAGES.DOCUMENT.INVALID_FORMAT), false);
+    //validate file type
+    if (file.mimetype !== 'application/pdf') {
+      return cb(new Error(MESSAGES.DOCUMENT.INVALID_FORMAT), false);
     }
+
+    // validate field name / document type
+    if (!['resume', 'jd'].includes(file.fieldname)) {
+      return cb(new Error(MESSAGES.DOCUMENT.INVALID_TYPE), false);
+    }
+
+    cb(null, true);
   },
 }).fields([
   { name: 'resume', maxCount: 1 },

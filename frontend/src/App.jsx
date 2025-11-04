@@ -46,13 +46,14 @@ function App() {
       </Routes>
       <ToastContainer
         position="top-center"
-        autoClose={2000}
+        autoClose={500}
         hideProgressBar={false}
         newestOnTop={false}
         closeOnClick
         pauseOnHover={false}
         draggable
         theme="light"
+        
       />
     </BrowserRouter>
   );

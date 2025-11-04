@@ -5,8 +5,9 @@ const cloudinary = require("../config/cloudinary");
 const STATUS_CODES = require("../constants/statusCodes");
 const MESSAGES = require("../constants/messages");
 const { sendSuccess, sendError } = require("../utils/helpers");
-const { isValidDocumentType } = require("../utils/validators");
+//const { isValidDocumentType, isValidPDF, isValidFileSize } = require("../utils/validators");
 const { chunkText } = require("../utils/helpers");
+const CONSTANTS = require('../constants/otherConstants');
 
 exports.uploadDocument = async (req, res) => {
   try {
@@ -24,10 +25,6 @@ exports.uploadDocument = async (req, res) => {
 
     const type = file.fieldname === "resume" ? "resume" : "jd";
 
-    if (!["resume", "jd"].includes(type)) {
-      return sendError(res, STATUS_CODES.BAD_REQUEST, "Invalid document type");
-    }
-
     const response = await axios.get(file.path, {
       responseType: "arraybuffer",
     });
@@ -39,7 +36,7 @@ exports.uploadDocument = async (req, res) => {
     } catch (error) {
       console.error("PDF parse error:", error);
       await cloudinary.uploader.destroy(file.filename, {
-        resource_type: "raw",
+        resource_type: CONSTANTS.UPLOAD_CONSTANTS.RESOURCE_TYPE,
       });
       return sendError(
         res,
@@ -51,7 +48,7 @@ exports.uploadDocument = async (req, res) => {
     const text = pdfData.text;
     if (!text || text.trim().length === 0) {
       await cloudinary.uploader.destroy(file.filename, {
-        resource_type: "raw",
+        resource_type: CONSTANTS.UPLOAD_CONSTANTS.RESOURCE_TYPE,
       });
       return sendError(
         res,
@@ -60,12 +57,12 @@ exports.uploadDocument = async (req, res) => {
       );
     }
 
-    const chunks = chunkText(text, 500);
+    const chunks = chunkText(text, CONSTANTS.DOC.WORDS_PER_CHUNK);
     
-    const oldDoc = await Document.findOne({ userId: req.userId, type }); //old docs are replaced with new ones
+    const oldDoc = await Document.findOne({ userId: req.userId, type });
     if (oldDoc) {
       await cloudinary.uploader.destroy(oldDoc.cloudinaryPublicId, {
-        resource_type: "raw",
+        resource_type: CONSTANTS.UPLOAD_CONSTANTS.RESOURCE_TYPE,
       });
       await oldDoc.deleteOne();
     }
@@ -113,14 +110,25 @@ exports.getDocuments = async (req, res) => {
       .select("type fileName fileSize cloudinaryUrl createdAt")
       .sort({ createdAt: -1 });
 
-    return res.status(STATUS_CODES.OK).json({
+    /* return res.status(STATUS_CODES.OK).json({
       success: true,
       message: "Documents fetched successfully",
       documents,
-    });
+    }); */
+    return sendSuccess(
+      res,
+      STATUS_CODES.OK,
+      MESSAGES.DOCUMENT.FETCH_SUCCESS, 
+      documents
+    );
   } catch (error) {
     console.error("Fetch documents error:", error);
-    return sendError(
+    /* return sendError(
+      res,
+      STATUS_CODES.INTERNAL_SERVER_ERROR,
+      MESSAGES.DOCUMENT.FETCH_FAILED
+    ); */
+     return sendError(
       res,
       STATUS_CODES.INTERNAL_SERVER_ERROR,
       MESSAGES.DOCUMENT.FETCH_FAILED
@@ -144,7 +152,7 @@ exports.deleteDocument = async (req, res) => {
     }
 
     await cloudinary.uploader.destroy(document.cloudinaryPublicId, {
-      resource_type: "raw",
+      resource_type: CONSTANTS.UPLOAD_CONSTANTS.RESOURCE_TYPE,
     });
 
     await document.deleteOne();

@@ -1,7 +1,9 @@
 const STATUS_CODES = require('../constants/statusCodes');
+const {DOC} = require('../constants/otherConstants')
+
 
 // Success response 
-const sendSuccess = (res, statusCode, message, data = null) => {
+/* const sendSuccess = (res, statusCode, message, data = null) => {
   const response = {
     success: true,
     message,
@@ -12,6 +14,17 @@ const sendSuccess = (res, statusCode, message, data = null) => {
   }
 
   return res.status(statusCode).json(response);
+}; */
+const sendSuccess = (res, statusCode, message = null, data = null, raw = false) => {
+  if (raw) {
+    return res.status(statusCode).json(data);
+  }
+
+  return res.status(statusCode).json({
+    success: true,
+    message,
+    data,
+  });
 };
 
 // Error response 
@@ -42,13 +55,13 @@ const sanitizeUser = (user) => {
 const formatFileSize = (bytes) => {
   if (bytes === 0) return '0 Bytes';
   const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const sizes = DOC.ARR_SIZES
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
 };
 
 // Chunk text
-const chunkText = (text, wordsPerChunk = 500) => {
+const chunkText = (text, wordsPerChunk = DOC.WORDS_PER_CHUNK) => {
   const words = text.split(/\s+/);
   const chunks = [];
   

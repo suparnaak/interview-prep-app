@@ -41,8 +41,8 @@ const Dashboard = () => {
   const fetchDocuments = async () => {
     try {
       setLoadingDocs(true);
-      const data = await fetchDocumentsApi();
-      setDocuments(data.documents || []);
+      const res = await fetchDocumentsApi();
+      setDocuments(res.data || []);
     } catch (err) {
       console.error(err);
       toast.error(err?.response?.data?.message || "Failed to fetch documents");
