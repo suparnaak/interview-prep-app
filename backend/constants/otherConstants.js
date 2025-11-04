@@ -8,7 +8,7 @@ const CONSTANTS = {
     },
   },
   AI: {
-    GEMINI_CHAT_MODEL: "gemini-1.5-flash",
+    GEMINI_CHAT_MODEL: "gemini-1.5-flash-001",
     GEMINI_EMBEDDING_MODEL: "text-embedding-004",
     RESUME_CHAR_LIMIT: 2000,
   },
